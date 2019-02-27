@@ -44,8 +44,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,
-        GoogleMap.OnInfoWindowClickListener {
+public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnCameraMoveListener, GoogleMap.OnInfoWindowClickListener {
 
 
     private static final String TAG = "MyLocationsActivity"; /**
@@ -61,6 +60,9 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
     private Location mCurrentLocation;
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback mLocationCallback;
+
+    private FloatingActionButton mFab;
+    private boolean mUserControllingCamera = false;
 
     // region Map
 
@@ -81,19 +83,17 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
 
         colorCount = 0;
 
-
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        mFab = findViewById(R.id.fab);
+        mFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mCurrentLocation == null) {
                     Snackbar.make(view, "Please wait for location to enable", Snackbar.LENGTH_LONG)
                             .setAction("Action", null).show();
                 } else {
-                    Intent i = new Intent(MyLocationsActivity.this, MapsActivity.class);
-                    //pass the current location on to the MapActivity when it is loaded
-                    i.putExtra("LOCATION", mCurrentLocation);
-                    startActivity(i);
+                    mUserControllingCamera = false;
+                    mFab.hide();
+                    setLocation(mCurrentLocation);
                 }
             }
         });
@@ -261,6 +261,7 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
         mMap = googleMap;
         mMap.setOnMapClickListener(this);
         mMap.setOnInfoWindowClickListener(this);
+        mMap.setOnCameraMoveListener(this);
     }
 
     @Override
@@ -294,7 +295,7 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
             colorCount = 0;
         }
 
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18.0f));
+        // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18.0f));
     }
 
     @Override
@@ -359,8 +360,10 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
             mCurrentLocationMarker.setPosition(current);
         }
 
-        //Zoom levels are from 2.0f (zoomed out) to 21.f (zoomed in)
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 15.0f));
+        if (!mUserControllingCamera) {
+            //Zoom levels are from 2.0f (zoomed out) to 21.f (zoomed in)
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 15.0f));
+        }
     }
 
     public static BitmapDescriptor getBitmapFromVector(@NonNull Context context,
@@ -379,5 +382,11 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
         DrawableCompat.setTint(vectorDrawable, tintColor);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    @Override
+    public void onCameraMove() {
+        mUserControllingCamera = true;
+        mFab.show();
     }
 }

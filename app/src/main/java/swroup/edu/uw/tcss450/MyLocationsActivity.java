@@ -21,9 +21,16 @@ import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MyLocationsActivity extends AppCompatActivity {
+public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
 
 
     private static final String TAG = "MyLocationsActivity"; /**
@@ -40,7 +47,12 @@ public class MyLocationsActivity extends AppCompatActivity {
     private FusedLocationProviderClient mFusedLocationClient;
     private LocationCallback mLocationCallback;
 
-    private TextView mLocationTextView;
+    // region Map
+
+    private GoogleMap mMap;
+    private Marker mCurrentLocationMarker;
+
+    // endregion Map
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,7 +77,12 @@ public class MyLocationsActivity extends AppCompatActivity {
             }
         });
 
-        mLocationTextView = findViewById(R.id.textView_content_main_location);
+        mCurrentLocation = (Location) getIntent().getParcelableExtra("LOCATION");
+
+        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -207,6 +224,34 @@ public class MyLocationsActivity extends AppCompatActivity {
         super.onPause();
         stopLocationUpdates();
     }
+
+
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Sydney, Australia.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setOnMapClickListener(this);
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        Log.d("LAT/LONG", latLng.toString());
+
+        mCurrentLocationMarker = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title("New Marker"));
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18.0f));
+    }
+
     /**
      * Requests location updates from the FusedLocationApi.
      */
@@ -232,7 +277,16 @@ public class MyLocationsActivity extends AppCompatActivity {
 
     private void setLocation(final Location location) {
         mCurrentLocation = location;
-        mLocationTextView.setText(mCurrentLocation.getLatitude() + " " +
-                mCurrentLocation.getLongitude());
+
+        // Add a marker in the current device location and move the camera
+        LatLng current = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+        if (mCurrentLocationMarker == null) {
+            mCurrentLocationMarker = mMap.addMarker(new MarkerOptions().position(current).title("Current Location"));
+        } else {
+            mCurrentLocationMarker.setPosition(current);
+        }
+
+        //Zoom levels are from 2.0f (zoomed out) to 21.f (zoomed in)
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 15.0f));
     }
 }

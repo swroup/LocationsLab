@@ -1,7 +1,9 @@
 package swroup.edu.uw.tcss450;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -42,7 +44,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener {
+public class MyLocationsActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener,
+        GoogleMap.OnInfoWindowClickListener {
 
 
     private static final String TAG = "MyLocationsActivity"; /**
@@ -66,12 +69,18 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
 
     // endregion Map
 
+    //color
+    private Integer colorCount;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        colorCount = 0;
+
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -261,7 +270,55 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
                 .position(latLng)
                 .title("New Marker"));
 
+        if( colorCount == 0 ) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE));
+            colorCount++;
+        } else if(colorCount == 1) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE));
+            colorCount++;
+        }else if(colorCount == 2) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN));
+            colorCount++;
+        }else if(colorCount == 3) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            colorCount++;
+        }else if(colorCount == 4) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+            colorCount++;
+        }else if(colorCount == 5) {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            colorCount++;
+        } else {
+            mCurrentLocationMarker.setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+            colorCount = 0;
+        }
+
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18.0f));
+    }
+
+    @Override
+    public void onInfoWindowClick( final Marker marker) {
+
+        //marker.remove();
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        builder.setMessage("DELETE ?");
+
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked OK button
+                marker.remove();
+            }
+        });
+        builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User cancelled the dialog
+            }
+        });
+
+        builder.show();
+
     }
 
     /**

@@ -260,6 +260,7 @@ public class MyLocationsActivity extends AppCompatActivity implements OnMapReady
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMapClickListener(this);
+        mMap.setOnInfoWindowClickListener(this);
     }
 
     @Override
